@@ -1,0 +1,24 @@
+# dependencies / build output
+node_modules
+dist
+web/dist
+web/tsconfig.tsbuildinfo
+
+# secrets and local config
+.env
+
+# runtime data — created on first run, never committed
+data/calls.json
+data/leads.csv
+# RAG vector index — regenerate with: npm run ingest
+data/rag-index.json
+
+# knowledge base source PDF is yours to bring (or build with: npm run kb:build)
+content/knowledge/*.pdf
+content/knowledge/backup/
+content/knowledge/_kb.html
+
+# local voice A/B samples (npm run voices -- --sample)
+
+.DS_Store
+*.log
