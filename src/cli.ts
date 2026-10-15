@@ -6,7 +6,7 @@ import { loadLeads } from "./storage/leads.js";
 import { dialLead, planDials } from "./phone/dialer.js";
 import { handleTurn } from "./conversation/turn.js";
 import { createSession, startCall } from "./conversation/stateMachine.js";
-import { addToDnc } from "./compliance/dnc.js";
+import { addToDnc } from "./storage/dnc.js";
 import { ingestPdf } from "./rag/ingest.js";
 
 async function simulate() {

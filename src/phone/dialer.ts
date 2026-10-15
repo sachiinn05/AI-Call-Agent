@@ -1,4 +1,4 @@
-import { addToDnc, isSuppressed, normalizeNumber } from "../compliance/dnc.js";
+import { addToDnc, isSuppressed, normalizeNumber } from "../storage/dnc.js";
 import { loadLeads } from "../storage/leads.js";
 import { isConfigured, placeOutboundCall } from "./vapi.js";
 import type { Lead } from "../types.js";

@@ -12,7 +12,7 @@
     "ingest": "tsx src/cli.ts ingest",
     "kb:build": "tsx scripts/build-knowledge-pdf.ts",
     "mail:test": "tsx scripts/mail-test.ts",
-    "tunnel": "ngrok http 3000",
+    "tunnel": "ngrok http 3001",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "voices": "tsx scripts/voices.ts",

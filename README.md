@@ -75,8 +75,7 @@ The call moves through five beats — **opening → discovery → pitch → clos
 │  ├─ mail/mailer.ts           Gmail: sends the calendar-link email
 │  ├─ phone/                   dialer.ts + vapi.ts: real outbound phone calls
 │  ├─ scoring/scorer.ts        outcome of a call: Meeting Booked / Follow-up / Not Interested / …
-│  ├─ storage/                 leads.ts (CSV) · calls.ts (call history JSON)
-│  └─ compliance/dnc.ts        do-not-call list
+│  └─ storage/                 leads.ts (CSV) · calls.ts (call history JSON) · dnc.ts (do-not-call list)
 │
 ├─ web/                      The dashboard (React + TypeScript + Tailwind, built with Vite → web/dist)
 │  └─ src/

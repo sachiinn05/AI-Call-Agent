@@ -9,7 +9,7 @@
 import { Router } from "express";
 import { bookSlot } from "../booking/calendar.js";
 import { pickOfferSlots } from "../booking/offer.js";
-import { addToDnc } from "../compliance/dnc.js";
+import { addToDnc } from "../storage/dnc.js";
 import { handleTurn } from "../conversation/turn.js";
 import { createSession, endCallManually, nudge, startCall } from "../conversation/stateMachine.js";
 import { calendarLinkEmail, sendMail } from "../mail/mailer.js";
