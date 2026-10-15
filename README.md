@@ -4,6 +4,16 @@ Outbound sales voice agent. It calls a lead, runs a scripted conversation, answe
 
 **Stack:** Node.js, TypeScript, Express 5 · React, Tailwind, Vite · Groq (intent) · Gemini embeddings (RAG) · Sarvam / Edge TTS · Cal.com · Gmail SMTP · Vitest
 
+## Screenshots
+
+**Choose an agent and a lead**
+
+![Choose an agent and a lead](docs/screenshots/choose-agent.png)
+
+**Live call**
+
+![Live call with the agent](docs/screenshots/live-call.png)
+
 ## Requirements
 
 - Node.js 22+
@@ -99,6 +109,7 @@ Design rules:
 │  ├─ dnc.csv                  do-not-call numbers
 │  └─ calls.json, rag-index.json   generated, git-ignored
 │
+├─ docs/screenshots/         Images used in this README
 ├─ scripts/                  Developer tools: build-knowledge-pdf.ts · mail-test.ts · voices.ts
 ├─ tests/                    Vitest; mirrors src/ (conversation · script · booking · rag · llm · web)
 └─ .github/workflows/ci.yml  typecheck + tests + dashboard build
