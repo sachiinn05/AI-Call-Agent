@@ -2,7 +2,7 @@ import { config } from "../config.js";
 import { firstName } from "../script/lines.js";
 import { detectIntent } from "../conversation/intent.js";
 import { scriptQuestionFor } from "../conversation/stateMachine.js";
-import { IntentSchema, type Intent, type Session } from "../types.js";
+import { IntentSchema, type Intent, type Lead, type Session } from "../types.js";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models";
@@ -254,6 +254,24 @@ function languageHint(language: string): string {
   return "Speak spoken US English only.";
 }
 
+/** How to address the caller: "ma'am" for a woman, "sir" for a man (from the lead's gender). */
+export function honorific(lead: Lead): "ma'am" | "sir" {
+  return lead.gender === "female" ? "ma'am" : "sir";
+}
+
+/** Safety net: the model sometimes picks the wrong honorific — swap it for the right one. */
+export function fixHonorific(text: string, lead: Lead): string {
+  const right = honorific(lead);
+  const wrong = right === "sir" ? /\b(ma'am|madam|mam|maam)\b/gi : /\bsir\b/gi;
+  return text.replace(wrong, (m) => (m[0] === m[0]!.toUpperCase() ? right[0]!.toUpperCase() + right.slice(1) : right));
+}
+
+function addressRule(lead: Lead): string {
+  const word = honorific(lead);
+  const other = word === "sir" ? "ma'am" : "sir";
+  return `If you address the caller politely, say "${word}" — never "${other}".`;
+}
+
 function countSentences(text: string): number {
   return text.split(/(?<=[.!?।…])\s+/).filter((s) => s.trim().length >= 8).length;
 }
@@ -290,7 +308,8 @@ export async function steerBackToScript(session: Session, userText: string, fall
 Output ONLY 1 or 2 short spoken sentences. No thinking, no labels.
 Briefly acknowledge what they said. Do not invent pricing, hospital facts, or extra product claims.
 Then immediately ask this exact question again: ${anchor}
-One question only. Then stop.`,
+One question only. Then stop.
+${addressRule(session.lead)}`,
         },
         {
           role: "user",
@@ -299,7 +318,7 @@ One question only. Then stop.`,
       ],
       { maxTokens: 220, temperature: 0.3 },
     );
-    const spoken = tidySpoken(raw, "");
+    const spoken = fixHonorific(tidySpoken(raw, ""), session.lead);
     if (!spoken) {
       lastVia = "script";
       lastError = "Groq steer empty, used hold line";
@@ -349,6 +368,7 @@ Rules:
 - Keep every fact, number, name, and time in the line exactly as given. Do not drop, add, or invent any.
 - Keep the same question / call-to-action at the end.
 - 1-2 short spoken sentences. No lists, no markdown, no labels.
+- ${addressRule(session.lead)}
 Output ONLY the rephrased spoken line.`,
         },
         {
@@ -362,7 +382,7 @@ Output ONLY the rephrased spoken line.`,
     // sentences) — a hard 2-sentence cap was silently cutting off the
     // closing "…want a quick demo?" in real calls.
     const budget = Math.max(2, countSentences(canned) + 1);
-    const spoken = tidySpoken(raw, "", budget, Math.max(280, canned.length + 120));
+    const spoken = fixHonorific(tidySpoken(raw, "", budget, Math.max(280, canned.length + 120)), session.lead);
     if (!spoken) {
       lastVia = "script";
       return canned;

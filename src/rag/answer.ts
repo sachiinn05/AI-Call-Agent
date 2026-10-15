@@ -8,7 +8,7 @@
  * or a low retrieval score means "the source doesn't cover this" — the
  * caller hears the honest pivot line, never an invented fact.
  */
-import { groqChat, groqEnabled, stripReasoning } from "../llm/groq.js";
+import { fixHonorific, groqChat, groqEnabled, honorific, stripReasoning } from "../llm/groq.js";
 import type { Lead, PreferredLanguage } from "../types.js";
 import { embedOne, embeddingsEnabled } from "./embeddings.js";
 import { loadIndex, search, type RagIndex } from "./store.js";
@@ -69,7 +69,7 @@ export function lastRetrievalScore(): number {
  */
 export async function answerFromPdf(
   question: string,
-  _lead: Lead,
+  lead: Lead,
   language: PreferredLanguage,
   minScore = FLOOR,
 ): Promise<RagMatch | null> {
@@ -101,7 +101,7 @@ export async function answerFromPdf(
       [
         {
           role: "system",
-          content: `${languageHint(language)} You are answering a caller's question on a live phone call, using ONLY the reference material below. Reply with 1-2 short spoken sentences, no lists, no markdown. Always answer in the language requested above, translating from the material if it is in another language, and keep it warm and natural like a person talking, not a document. Do not add any fact not present in the material, and do not infer or rephrase it into a new claim (for example about servers, hosting, location, certifications or numbers). If the material only partly covers the question, answer just the covered part and say the rest is covered in the demo. If the material does not answer the question, reply with exactly: NONE`,
+          content: `${languageHint(language)} You are answering a caller's question on a live phone call, using ONLY the reference material below. Reply with 1-2 short spoken sentences, no lists, no markdown. Always answer in the language requested above, translating from the material if it is in another language, and keep it warm and natural like a person talking, not a document. If you address the caller politely, say "${honorific(lead)}" only. Do not add any fact not present in the material, and do not infer or rephrase it into a new claim (for example about servers, hosting, location, certifications or numbers). If the material only partly covers the question, answer just the covered part and say the rest is covered in the demo. If the material does not answer the question, reply with exactly: NONE`,
         },
         {
           role: "user",
@@ -110,7 +110,7 @@ export async function answerFromPdf(
       ],
       { maxTokens: 220, temperature: 0.2 },
     );
-    const cleaned = stripReasoning(raw).replace(/^["']|["']$/g, "").trim();
+    const cleaned = fixHonorific(stripReasoning(raw).replace(/^["']|["']$/g, "").trim(), lead);
     if (!cleaned || /^none\.?$/i.test(cleaned)) return null;
 
     return { id: best.chunk.id, answer: cleaned, score: best.score, via: "rag" };
