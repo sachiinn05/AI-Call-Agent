@@ -1,4 +1,4 @@
-# Lipi.ai Call Agent
+# Aarohi Connect Call Agent
 
 Outbound sales voice agent. It calls a lead, runs a scripted conversation, answers questions from a PDF knowledge base, and books a meeting on Cal.com. Calls run in the browser (mic + speakers) for development; real phone calls go through Vapi.
 
