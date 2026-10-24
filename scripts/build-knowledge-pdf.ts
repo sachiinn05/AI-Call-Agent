@@ -13,7 +13,8 @@
  *  - Questions include the way callers actually phrase them, in Hinglish too.
  */
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { config } from "../src/config.js";
 
@@ -165,6 +166,7 @@ if (existsSync(target)) {
 }
 
 const htmlPath = path.join(path.dirname(target), "_kb.html");
+const startedAt = Date.now();
 writeFileSync(htmlPath, html(), "utf8");
 execFileSync(
   findBrowser(),
@@ -172,10 +174,15 @@ execFileSync(
     "--headless=new",
     "--disable-gpu",
     "--no-pdf-header-footer",
+    // Its own profile: otherwise Edge hands the job to an already-open window and prints nothing.
+    `--user-data-dir=${path.join(tmpdir(), "lipi-kb-browser")}`,
     `--print-to-pdf=${target}`,
     `file:///${htmlPath.replaceAll("\\", "/")}`,
   ],
   { stdio: "ignore", timeout: 60_000 },
 );
 rmSync(htmlPath, { force: true });
+if (!existsSync(target) || statSync(target).mtimeMs < startedAt) {
+  throw new Error("The browser did not write the PDF. Close Edge/Chrome windows and try again.");
+}
 console.log(`Wrote ${path.relative(config.root, target)} for "${company}" / ${founder}. Now run: npm run ingest`);

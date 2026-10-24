@@ -58,7 +58,7 @@ class PageBoundary extends Component<{ children: ReactNode }, { failed: boolean 
 export default function App() {
   const [tab, setTab] = useState<Tab>("live");
   const [inCall, setInCall] = useState(false);
-  const [company, setCompany] = useState({ name: "Lipi.ai", founder: "" });
+  const [company, setCompany] = useState({ name: "Aarohi Connect", founder: "" });
 
   useEffect(() => {
     fetch("/api/dashboard")

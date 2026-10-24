@@ -36,8 +36,8 @@ const LANG_BADGE: Record<string, { label: string; gradient: string }> = {
 // purely on the timeout.
 const SILENCE_NUDGE_MS = 9000;
 
-function viaLabel(via: ReplyVia | "", faqId?: string | null): { text: string; tone: string } {
-  if (via === "faq") return { text: `Answered from the PDF (RAG) · ${faqId || ""}`.trim(), tone: "bg-good/15 text-good" };
+function viaLabel(via: ReplyVia | "", _faqId?: string | null): { text: string; tone: string } {
+  if (via === "faq") return { text: "Answered from the Company Policy PDF (RAG)", tone: "bg-good/15 text-good" };
   if (via === "steer") return { text: "Script line, said Groq's way — same facts", tone: "bg-speak/15 text-speak" };
   if (via === "groq") return { text: "Groq heard you — speaking the script", tone: "bg-speak/15 text-speak" };
   if (via === "script") return { text: "Script line — word for word", tone: "bg-white/[0.07] text-muted" };
@@ -596,7 +596,7 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
               </div>
               <h2 className="mt-2 font-display text-2xl font-bold tracking-tight">{selectedLead?.contact_name || "Select a contact"}</h2>
               <p className="text-sm text-muted">
-                {selectedLead ? `${selectedLead.contact_role ? selectedLead.contact_role + " · " : ""}${selectedLead.company_name}` : "Lipi.ai outbound voice agent"}
+                {selectedLead ? `${selectedLead.contact_role ? selectedLead.contact_role + " · " : ""}${selectedLead.company_name}` : "Aarohi Connect outbound voice agent"}
               </p>
               <p className="mt-3 flex items-center gap-2 text-xs font-medium text-muted">
                 <span className={`h-1.5 w-1.5 rounded-full ${phaseDot}`} />
