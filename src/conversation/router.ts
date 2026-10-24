@@ -10,12 +10,22 @@ const SLOT_INTENTS = new Set<Intent>(["accept_slot", "decline_slots", "give_avai
 const QUESTION_RE =
   /\?|\b(what|how|when|where|which|who|why|whom|do you|does|can you|could you|is it|is there|are you|are there|tell me|kya|kaise|kaisa|kitna|kitne|kitni|kab|kahan|kaun|kyun|kyon|batao|bataiye|bata do|hai kya|hoga kya|milega|kaisi|kaise|sakte|sakta|sakti|karte ho|karta hai|karti hai|hota hai|hoti hai|milta|milti|lagega|lagta|pricing|cost|charges|integrate|security|hai na|kahan|kahaan|janna|jaanna|kis (chij|cheez|baare|ka|ke|ki)|kiska|kiski|(poochh|pooch|puch) raha)\b/i;
 
+// A reply that starts with a yes ("haan ji …", "okay …").
+const YES_LEAD_RE = /^\s*(haan|han|haanji|hanji|ha|ji|yes|yeah|yep|ok|okay|bilkul|sure|theek hai|thik hai)\b/i;
+// Verb forms that make a plain answer look like a question ("ho sakti hai", "chalta hai").
+const MODAL_ECHO_RE = /\b(sakte|sakta|sakti|hota hai|hoti hai|karte ho|karta hai|karti hai|hai na)\b/gi;
+
 /** An explicit "book/schedule it" ask — never treated as a knowledge question. */
 export const BOOKING_ASK_RE = BOOKING_RE;
 
 /** True when the caller is asking something, as opposed to describing/answering. */
 export function looksLikeQuestion(text: string): boolean {
-  return QUESTION_RE.test(text);
+  if (!QUESTION_RE.test(text)) return false;
+  // "Haan ji, ho sakti hai" answers "can we talk?" — it only echoes a modal verb. A short
+  // yes with no real question word left is an answer, not something to look up in the PDF.
+  const isShortYes = YES_LEAD_RE.test(text) && text.trim().split(/\s+/).length <= 6;
+  if (isShortYes && !QUESTION_RE.test(text.replace(MODAL_ECHO_RE, " "))) return false;
+  return true;
 }
 
 // Intents under which a question-shaped utterance should be tried against

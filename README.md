@@ -14,6 +14,12 @@ Outbound sales voice agent. It calls a lead, runs a scripted conversation, answe
 
 ![Live call with the agent](docs/screenshots/live-call.png)
 
+## Demo videos
+
+Recorded live calls, in Hindi (Hinglish) and in English: **[Watch the demos on Google Drive](https://drive.google.com/drive/folders/1mi7HSSxdw9uceHAX2cogBIqI1dubm5Xc?usp=sharing)**
+
+Each demo shows the full flow: the agent opens the call, handles the lead's replies, answers questions from the knowledge PDF, and books a real meeting on Cal.com with a confirmation email.
+
 ## Requirements
 
 - Node.js 22+

@@ -22,3 +22,7 @@ content/knowledge/_kb.html
 
 .DS_Store
 *.log
+.env.example
+docs
+.docs
+

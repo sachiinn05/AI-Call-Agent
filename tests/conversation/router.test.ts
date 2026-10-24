@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyRoute } from "../../src/conversation/router.js";
+import { classifyRoute, looksLikeQuestion } from "../../src/conversation/router.js";
 import type { Intent } from "../../src/types.js";
 
 // Regression test for the bug where classifyRoute() defaulted every intent
@@ -48,5 +48,17 @@ describe("classifyRoute", () => {
   it("only routes slot intents to booking once the call is in CLOSE", () => {
     expect(classifyRoute("accept_slot", "monday works", "PITCH")).toBe("conversation");
     expect(classifyRoute("accept_slot", "monday works", "CLOSE")).toBe("booking");
+  });
+});
+
+describe("a short yes is not a question", () => {
+  it("treats 'han ji ho sakti hai' as an answer", () => {
+    expect(looksLikeQuestion("han ji ho sakti hai")).toBe(false);
+    expect(looksLikeQuestion("haan bol sakta hoon")).toBe(false);
+  });
+  it("still treats real questions as questions", () => {
+    expect(looksLikeQuestion("haan, kya ye book kar sakta hai?")).toBe(true);
+    expect(looksLikeQuestion("ye order details le sakta hai")).toBe(true);
+    expect(looksLikeQuestion("okay, how much does it cost")).toBe(true);
   });
 });
