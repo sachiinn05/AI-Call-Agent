@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { detectCallerSignal } from "../../src/conversation/signals.js";
-import { applyCallerSignal, createSession, replyTo } from "../../src/conversation/stateMachine.js";
-import { scoreCall } from "../../src/scoring/scorer.js";
-import type { Lead } from "../../src/types.js";
+import { detectCallerSignal } from "../../backend/conversation/signals.js";
+import { applyCallerSignal, createSession, replyTo } from "../../backend/conversation/stateMachine.js";
+import { scoreCall } from "../../backend/scoring/scorer.js";
+import type { Lead } from "../../backend/types.js";
 
 const lead: Lead = {
   company_name: "CityCare",

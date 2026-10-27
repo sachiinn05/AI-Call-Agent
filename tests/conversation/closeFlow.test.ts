@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { applyCallerSignal, createSession, replyTo, startCall } from "../../src/conversation/stateMachine.js";
-import { detectCallerSignal } from "../../src/conversation/signals.js";
-import { defaultMeetingSlots } from "../../src/script/lines.js";
-import type { Lead } from "../../src/types.js";
+import { applyCallerSignal, createSession, replyTo, startCall } from "../../backend/conversation/stateMachine.js";
+import { detectCallerSignal } from "../../backend/conversation/signals.js";
+import { defaultMeetingSlots } from "../../backend/script/lines.js";
+import type { Lead } from "../../backend/types.js";
 
 const lead: Lead = {
   company_name: "CityCare",
@@ -137,8 +137,8 @@ describe("early-call flow", () => {
   });
 });
 
-import { backOnTrackTail, noInfoExit, noInfoPivot } from "../../src/conversation/stateMachine.js";
-import { scoreCall } from "../../src/scoring/scorer.js";
+import { backOnTrackTail, noInfoExit, noInfoPivot } from "../../backend/conversation/stateMachine.js";
+import { scoreCall } from "../../backend/scoring/scorer.js";
 
 describe("staying human when the caller drifts", () => {
   it("explains the pitch in plain words when the caller didn't follow", () => {
@@ -174,7 +174,7 @@ describe("staying human when the caller drifts", () => {
   });
 });
 
-import { parseDayTime } from "../../src/booking/slotTime.js";
+import { parseDayTime } from "../../backend/booking/slotTime.js";
 
 describe("half an answer about the time", () => {
   it("reads a time with no day and a day with no time as halves", () => {
@@ -237,7 +237,7 @@ describe("caller wants the calendar link", () => {
   });
 });
 
-import { pickOfferSlots } from "../../src/booking/offer.js";
+import { pickOfferSlots } from "../../backend/booking/offer.js";
 
 describe("outcomes read from real call data", () => {
   it("a bare 'nahin' is Not Interested, but hanging up after engaging is not", async () => {
@@ -278,7 +278,7 @@ describe("outcomes read from real call data", () => {
   }, 20_000); // reads the real calendar when keys are present
 });
 
-import { detectIntent } from "../../src/conversation/intent.js";
+import { detectIntent } from "../../backend/conversation/intent.js";
 
 describe("bad mic reads from real calls", () => {
   it("'ha ha' is a yes, not a laugh to chat back at", () => {

@@ -86,7 +86,7 @@ export const ScriptSchema = z.object({
     need_to_think: Line,
     bad_past_experience: Line,
   }),
-  // Mid-call Q&A is now answered by PDF-backed RAG (src/rag/*), not this
+  // Mid-call Q&A is now answered by PDF-backed RAG (backend/rag/*), not this
   // file — kept optional so an old script that still carries a `faq:` block
   // stays valid.
   faq: z

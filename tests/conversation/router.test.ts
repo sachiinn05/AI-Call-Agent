@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { classifyRoute, looksLikeQuestion } from "../../src/conversation/router.js";
-import type { Intent } from "../../src/types.js";
+import { classifyRoute, looksLikeQuestion } from "../../backend/conversation/router.js";
+import type { Intent } from "../../backend/types.js";
 
 // Regression test for the bug where classifyRoute() defaulted every intent
 // (including plain "okay") to the RAG "knowledge" route. Without MongoDB

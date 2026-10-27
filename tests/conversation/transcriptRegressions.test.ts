@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { classifyRoute, looksLikeQuestion } from "../../src/conversation/router.js";
-import { detectIntent } from "../../src/conversation/intent.js";
-import { mentionsOfferedSlot, pickSlot } from "../../src/conversation/stateMachine.js";
+import { classifyRoute, looksLikeQuestion } from "../../backend/conversation/router.js";
+import { detectIntent } from "../../backend/conversation/intent.js";
+import { mentionsOfferedSlot, pickSlot } from "../../backend/conversation/stateMachine.js";
 
 // Each case here is lifted from a real call in data/calls.json that went
 // wrong. If one of these regresses, a real caller hits the same wall again.

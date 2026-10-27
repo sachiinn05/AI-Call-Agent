@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { fixHonorific, honorific } from "../../src/llm/groq.js";
-import type { Lead } from "../../src/types.js";
+import { fixHonorific, honorific } from "../../backend/llm/groq.js";
+import type { Lead } from "../../backend/types.js";
 
 const woman = { gender: "female" } as Lead;
 const man = { gender: "male" } as Lead;

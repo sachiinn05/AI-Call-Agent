@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pickSlot } from "../../src/conversation/stateMachine.js";
+import { pickSlot } from "../../backend/conversation/stateMachine.js";
 
 // Regression test for the bug where pickSlot() assumed offered slots are
 // always ["Monday ...", "Tuesday ..."] and treated the literal word

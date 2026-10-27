@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectIntent, isContinue, isOffScript } from "../../src/conversation/intent.js";
+import { detectIntent, isContinue, isOffScript } from "../../backend/conversation/intent.js";
 
 // Regression test for a stray leading space in the acknowledge regex
 // (`| achha` instead of `|achha`) that made a bare "achha" — a very common

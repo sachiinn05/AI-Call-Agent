@@ -35,7 +35,7 @@ beforeEach(async () => {
   (window as unknown as { SpeechRecognition: unknown }).SpeechRecognition = FakeRecognition;
   vi.resetModules();
   // @ts-expect-error - plain browser ESM, not part of the tsconfig src build
-  voiceModule = await import("../../web/src/lib/voice.js");
+  voiceModule = await import("../../frontend/src/lib/voice.js");
   heard = [];
   recognition = voiceModule.createListener({
     language: "hi-IN-hinglish",

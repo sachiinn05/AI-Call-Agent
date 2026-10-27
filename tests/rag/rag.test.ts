@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { chunkText, countTokens } from "../../src/rag/chunk.js";
-import { cosine, search, type RagIndex } from "../../src/rag/store.js";
+import { chunkText, countTokens } from "../../backend/rag/chunk.js";
+import { cosine, search, type RagIndex } from "../../backend/rag/store.js";
 
 // The parts of the RAG pipeline that don't need OPENAI_API_KEY / GROQ_API_KEY:
 // token-aware chunking and vector search over a saved index. Embedding and
-// grounded-generation (src/rag/embeddings.ts, src/rag/answer.ts) need a live
+// grounded-generation (backend/rag/embeddings.ts, backend/rag/answer.ts) need a live
 // OpenAI/Groq key and aren't exercised in CI, same as the Groq-dependent
 // paths elsewhere in this suite.
 

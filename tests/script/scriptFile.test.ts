@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { loadScript, render, ScriptSchema, scriptPath } from "../../src/script/scriptFile.js";
-import { PreferredLanguageSchema } from "../../src/types.js";
-import { openingLine, pitchLine, closeLine, nudgeLine, thinkingFillers, topicFor } from "../../src/script/lines.js";
-import { rebuttal } from "../../src/script/objections.js";
-import type { Lead } from "../../src/types.js";
+import { loadScript, render, ScriptSchema, scriptPath } from "../../backend/script/scriptFile.js";
+import { PreferredLanguageSchema } from "../../backend/types.js";
+import { openingLine, pitchLine, closeLine, nudgeLine, thinkingFillers, topicFor } from "../../backend/script/lines.js";
+import { rebuttal } from "../../backend/script/objections.js";
+import type { Lead } from "../../backend/types.js";
 
 // The script file is the only thing the agent can say. These tests make sure
 // the committed file is complete and well-formed, and that every rendered

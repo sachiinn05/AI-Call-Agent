@@ -1,8 +1,8 @@
 # dependencies / build output
 node_modules
 dist
-web/dist
-web/tsconfig.tsbuildinfo
+frontend/dist
+frontend/tsconfig.tsbuildinfo
 
 # secrets and local config
 .env

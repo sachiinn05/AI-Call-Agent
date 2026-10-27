@@ -32,7 +32,7 @@ Each demo shows the full flow: the agent opens the call, handles the lead's repl
 npm install
 npm run web:install
 cp .env.example .env        # fill in the keys you have
-npm run web:build           # builds the dashboard into web/dist
+npm run web:build           # builds the dashboard into frontend/dist
 npm run ingest              # builds the PDF search index (needs GEMINI_API_KEY)
 npm run dev                 # http://localhost:<PORT> (default 3001)
 ```
@@ -69,8 +69,8 @@ Design rules:
 │  ├─ call-script.yaml         every spoken line (validated at startup)
 │  └─ knowledge/               PDF used as the RAG source
 │
-├─ src/                      Backend
-│  ├─ server.ts                entry point: mounts routes, serves web/dist
+├─ backend/                  Backend
+│  ├─ server.ts                entry point: mounts routes, serves frontend/dist
 │  ├─ cli.ts                   CLI: simulate a call, dial a lead, ingest the PDF
 │  ├─ config.ts                reads .env once; all settings live here
 │  ├─ types.ts                 shared types and zod schemas (Lead, CallResult, Session)
@@ -104,7 +104,7 @@ Design rules:
 │  ├─ scoring/scorer.ts        call outcome: Meeting Booked / Follow-up / Not Interested …
 │  └─ storage/                 leads.ts (CSV) · calls.ts (JSON) · dnc.ts (do-not-call list)
 │
-├─ web/                      Dashboard (React + TypeScript + Tailwind, Vite → web/dist)
+├─ frontend/                 Dashboard (React + TypeScript + Tailwind, Vite → frontend/dist)
 │  └─ src/
 │      ├─ App.tsx              layout and routing between pages
 │      ├─ components/          LiveCall, Overview, Conversations, Leads, Bookings, Questions, ScriptView, ui
@@ -117,7 +117,7 @@ Design rules:
 │
 ├─ docs/screenshots/         Images used in this README
 ├─ scripts/                  Developer tools: build-knowledge-pdf.ts · mail-test.ts · voices.ts
-├─ tests/                    Vitest; mirrors src/ (conversation · script · booking · rag · llm · web)
+├─ tests/                    Vitest; mirrors backend/ (conversation · script · booking · rag · llm · web)
 └─ .github/workflows/ci.yml  typecheck + tests + dashboard build
 ```
 
@@ -128,7 +128,7 @@ Design rules:
 | `npm run dev` | Backend with auto-reload |
 | `npm start` | Backend without reload |
 | `npm run web:dev` | Dashboard dev server (hot reload) |
-| `npm run web:build` | Production dashboard build into `web/dist` |
+| `npm run web:build` | Production dashboard build into `frontend/dist` |
 | `npm run ingest` | Build the PDF search index |
 | `npm run kb:build` | Regenerate the knowledge PDF from `scripts/build-knowledge-pdf.ts` |
 | `npm run mail:test` | Send a test email to verify Gmail credentials |
@@ -155,7 +155,7 @@ Copy `.env.example` to `.env`. `.env` is git-ignored — never commit it.
 
 ## Common tasks
 
-**Change what the agent says.** Edit `content/call-script.yaml` and restart. A missing or misspelled field fails at startup, not mid-call. New placeholders must be registered in `src/script/scriptFile.ts`.
+**Change what the agent says.** Edit `content/call-script.yaml` and restart. A missing or misspelled field fails at startup, not mid-call. New placeholders must be registered in `backend/script/scriptFile.ts`.
 
 **Change what the agent knows.** Edit the Q&A in `scripts/build-knowledge-pdf.ts`, then `npm run kb:build && npm run ingest`. Or drop your own PDF in `content/knowledge/`, point `RAG_PDF_PATH` at it, and run `npm run ingest`.
 
@@ -163,11 +163,11 @@ Copy `.env.example` to `.env`. `.env` is git-ignored — never commit it.
 
 **Change the voice.** Set the `SARVAM_*` or `TTS_*` variables in `.env` and restart.
 
-**Add a conversation rule.** Put the logic in `src/conversation/`, the spoken text in `content/call-script.yaml` with a matching accessor in `src/script/lines.ts`, and a test in `tests/conversation/`.
+**Add a conversation rule.** Put the logic in `backend/conversation/`, the spoken text in `content/call-script.yaml` with a matching accessor in `backend/script/lines.ts`, and a test in `tests/conversation/`.
 
 ## Testing
 
-`npm test` runs Vitest. Tests mirror `src/`. Web-side listener logic (`web/src/lib/voice.js`) is tested under `tests/web/` with jsdom. A few booking tests call the real Cal.com availability API when keys are set and have extended timeouts.
+`npm test` runs Vitest. Tests mirror `backend/`. Web-side listener logic (`frontend/src/lib/voice.js`) is tested under `tests/web/` with jsdom. A few booking tests call the real Cal.com availability API when keys are set and have extended timeouts.
 
 CI (`.github/workflows/ci.yml`) runs typecheck, tests and the dashboard build on every push.
 

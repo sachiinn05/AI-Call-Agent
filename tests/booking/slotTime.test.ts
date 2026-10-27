@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveSlotStart } from "../../src/booking/slotTime.js";
+import { resolveSlotStart } from "../../backend/booking/slotTime.js";
 
 // Monday 2026-10-05 10:00 UTC (15:30 IST)
 const now = new Date("2026-10-05T10:00:00Z");
@@ -22,7 +22,7 @@ describe("resolveSlotStart", () => {
   });
 });
 
-import { parseSpokenSlot } from "../../src/booking/slotTime.js";
+import { parseSpokenSlot } from "../../backend/booking/slotTime.js";
 
 describe("parseSpokenSlot", () => {
   it("reads 'Friday 5 baje' as Friday 5pm IST", () => {

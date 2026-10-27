@@ -1,6 +1,6 @@
 /** Sends the calendar-link email to yourself so you can check Gmail sending works:  npm run mail:test */
-import { config } from "../src/config.js";
-import { calendarLinkEmail, mailEnabled, sendMail } from "../src/mail/mailer.js";
+import { config } from "../backend/config.js";
+import { calendarLinkEmail, mailEnabled, sendMail } from "../backend/mail/mailer.js";
 
 if (!mailEnabled()) {
   console.error("Set MAIL_USER and MAIL_APP_PASSWORD in .env first.");

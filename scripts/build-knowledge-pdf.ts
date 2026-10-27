@@ -16,7 +16,7 @@ import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { config } from "../src/config.js";
+import { config } from "../backend/config.js";
 
 const company = config.companyName;
 const founder = config.founderName;

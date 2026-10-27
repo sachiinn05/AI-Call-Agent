@@ -45,7 +45,7 @@ voiceRouter.post("/api/tts", async (req, res) => {
 });
 
 // STT fallback for browsers without window.SpeechRecognition (Safari, Firefox, mobile) —
-// web/src/lib/voice.js records with MediaRecorder and posts the raw clip here instead.
+// frontend/src/lib/voice.js records with MediaRecorder and posts the raw clip here instead.
 // Scoped express.raw() so the global JSON body parser is untouched for every other route.
 voiceRouter.post("/api/stt", express.raw({ type: () => true, limit: "10mb" }), async (req, res) => {
   const language = String(req.query.language ?? "en-IN");

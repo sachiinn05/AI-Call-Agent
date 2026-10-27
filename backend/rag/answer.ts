@@ -1,6 +1,6 @@
 /**
  * Real RAG for mid-call questions: embed the caller's question, retrieve the
- * nearest chunks from the PDF's vector index (src/rag/store.ts), and have
+ * nearest chunks from the PDF's vector index (backend/rag/store.ts), and have
  * Groq write the spoken answer grounded strictly in those chunks — replacing
  * the hand-written `faq:` block that used to be the only source of answers.
  *

@@ -7,10 +7,10 @@ const GROQ_TRANSCRIPTION_URL = "https://api.groq.com/openai/v1/audio/transcripti
 // mobile) — the primary path stays the browser's own live recognition.
 const WHISPER_MODEL = "whisper-large-v3-turbo";
 
-// The script (and every intent/FAQ regex in src/script/) is written in
+// The script (and every intent/FAQ regex in backend/script/) is written in
 // romanized Hinglish — "nahi", "haan", "kitna" — not Devanagari. Whisper's
 // "hi" language hint would transcribe in Devanagari script and silently
-// break every regex downstream. listenLocale() in web/src/lib/voice.js already
+// break every regex downstream. listenLocale() in frontend/src/lib/voice.js already
 // makes this same call for the browser's own recognizer (hi-IN-hinglish
 // listens as en-IN), so mirror it here rather than translating "correctly".
 const LANGUAGE_HINT: Record<string, string> = {

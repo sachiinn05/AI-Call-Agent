@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { thinkingFillers } from "../../src/script/lines.js";
-import { PreferredLanguageSchema } from "../../src/types.js";
+import { thinkingFillers } from "../../backend/script/lines.js";
+import { PreferredLanguageSchema } from "../../backend/types.js";
 
 // The backchannels are what the agent says the instant the caller stops
 // talking, while the real reply is still generating. They're pre-synthesized

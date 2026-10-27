@@ -1,6 +1,6 @@
 /**
- * Entry point: starts the Express server, serves the built dashboard (web/dist) and mounts
- * the API. Each group of endpoints lives in src/routes/ — see the README's project map.
+ * Entry point: starts the Express server, serves the built dashboard (frontend/dist) and mounts
+ * the API. Each group of endpoints lives in backend/routes/ — see the README's project map.
  */
 import express from "express";
 import path from "node:path";
@@ -17,7 +17,7 @@ import { prewarmSpeech } from "./voice/tts.js";
 
 const app = express();
 app.use(express.json({ limit: "2mb" }));
-app.use(express.static(path.join(config.root, "web", "dist")));
+app.use(express.static(path.join(config.root, "frontend", "dist")));
 
 app.use(healthRouter);
 app.use(dashboardRouter);
