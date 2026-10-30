@@ -23,6 +23,7 @@ export type Lead = {
   priority_tier?: string;
   gender?: string;
   email?: string;
+  custom_contact?: boolean;
 };
 
 export type BookingInfo = {

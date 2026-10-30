@@ -68,6 +68,8 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
   const [newCallVisible, setNewCallVisible] = useState(false);
   const [typedReply, setTypedReply] = useState("");
   const [confirmEmail, setConfirmEmail] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactGender, setContactGender] = useState<"male" | "female">("male");
   const [liveLog, setLiveLog] = useState<{ who: "agent" | "you"; text: string }[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -137,6 +139,9 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
       .filter((lead) => !q || `${lead.contact_name} ${lead.company_name} ${lead.industry}`.toLowerCase().includes(q));
   }, [leads, currentAgent, leadQuery]);
 
+  // The company dropdown is grouped by industry, in a stable order.
+  const industries = useMemo(() => [...new Set(matchingLeads.map((l) => l.industry))].sort(), [matchingLeads]);
+
   useEffect(() => {
     setTestDisabled(!selectedAgentId);
   }, [selectedAgentId]);
@@ -152,12 +157,11 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
     const lead = matchingLeads.find((l) => l.contact_number === number);
     if (!lead) return;
     setSelectedLead(lead);
-    setConfirmEmail(lead.email ?? "");
   }
 
   useEffect(() => {
-    setStartCallDisabled(!selectedLead);
-  }, [selectedLead]);
+    setStartCallDisabled(!selectedLead || !contactName.trim());
+  }, [selectedLead, contactName]);
 
   // --- audio plumbing ----------------------------------------------------
   function armSilenceNudge() {
@@ -363,8 +367,21 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
   }
 
   async function startCall() {
-    const lead = selectedLead;
-    if (!lead || inCallRef.current) return;
+    const company = selectedLead;
+    const name = contactName.trim();
+    if (!company || !name || inCallRef.current) return;
+    // The company comes from the saved lead; the person on the line is whoever was typed.
+    // custom_contact tells the server the phone number belongs to the company template, so an
+    // opt-out on this call must not put that number on the do-not-call list.
+    const lead: Lead = {
+      ...company,
+      contact_name: name,
+      contact_role: "",
+      gender: contactGender,
+      email: confirmEmail.trim(),
+      custom_contact: true,
+    };
+    setSelectedLead(lead);
     setStartCallDisabled(true);
     languageRef.current = lead.preferred_language;
     listenerReadyRef.current = false;
@@ -396,7 +413,7 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
     const res = await fetch("/api/simulate/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...lead, email: confirmEmail.trim() }),
+      body: JSON.stringify(lead),
     });
     const data = await res.json();
     callIdRef.current = data.callId;
@@ -492,86 +509,93 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
               </div>
             </Card>
 
-            {/* ---- step 2: lead ---- */}
+            {/* ---- step 2: who ---- */}
             <Card className="p-5">
-              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                <SectionTitle
-                  n={2}
-                  title="Pick a lead to call"
-                  hint={
-                    currentAgent
-                      ? `${matchingLeads.length} lead${matchingLeads.length === 1 ? "" : "s"} speak ${currentAgent.name.replace(" Agent", "")}.`
-                      : "Choose an agent first to see who it can call."
-                  }
-                />
-                {currentAgent && (
-                  <div className="relative w-full sm:w-64">
-                    <Icon name="search" size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+              <SectionTitle
+                n={2}
+                title="Who are you calling?"
+                hint={
+                  currentAgent
+                    ? "Type the contact, then pick the company they work at."
+                    : "Choose an agent first."
+                }
+              />
+              {!currentAgent && <EmptyState icon="users" title="No agent selected" hint="Pick one above and the form will appear here." />}
+              {currentAgent && (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <label className="block text-xs font-medium text-muted">
+                    Contact name
                     <input
-                      type="search"
-                      value={leadQuery}
-                      onChange={(e) => setLeadQuery(e.target.value)}
-                      placeholder="Search leads…"
-                      className="input pl-9"
+                      type="text"
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      placeholder="e.g. Aman Verma"
+                      className="input mt-1.5"
                     />
-                  </div>
-                )}
-              </div>
-
-              {!currentAgent && <EmptyState icon="users" title="No agent selected" hint="Pick one above and its leads will appear here." />}
-              {currentAgent && matchingLeads.length === 0 && <EmptyState icon="search" title="No leads match" hint={`Nothing found for “${leadQuery}”.`} />}
-              <div className="grid max-h-[380px] grid-cols-1 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-2">
-                {matchingLeads.map((lead) => {
-                  const selected = selectedLead?.contact_number === lead.contact_number;
-                  return (
-                    <button
-                      key={lead.contact_number}
-                      type="button"
-                      onClick={() => selectLead(lead.contact_number)}
-                      className={`flex items-start gap-3 rounded-2xl p-3.5 text-left ring-1 transition duration-150 ${
-                        selected ? "bg-brand/10 ring-brand/60" : "bg-white/[0.02] ring-white/10 hover:bg-white/[0.05] hover:ring-white/20"
-                      }`}
-                    >
-                      <Avatar name={lead.contact_name} size={42} />
-                      <span className="min-w-0 flex-1">
-                        <strong className="block truncate text-sm font-semibold">{lead.contact_name}</strong>
-                        <span className="block truncate text-xs text-muted">
-                          {lead.contact_role || "Contact"} · {lead.company_name}
-                        </span>
-                        <span className="mt-1.5 line-clamp-2 block text-[11px] leading-snug text-muted/80">{lead.need_for_bot || lead.company_description}</span>
-                      </span>
-                      {selected && <Icon name="check" size={16} className="mt-0.5 flex-none text-brand" />}
-                    </button>
-                  );
-                })}
-              </div>
+                  </label>
+                  <label className="block text-xs font-medium text-muted">
+                    Email (calendar invite goes here)
+                    <input
+                      type="email"
+                      value={confirmEmail}
+                      onChange={(e) => setConfirmEmail(e.target.value)}
+                      placeholder="aman@example.com"
+                      className="input mt-1.5"
+                    />
+                  </label>
+                  <label className="block text-xs font-medium text-muted">
+                    Gender
+                    <select value={contactGender} onChange={(e) => setContactGender(e.target.value as "male" | "female")} className="input mt-1.5">
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </label>
+                  <label className="block text-xs font-medium text-muted">
+                    Company
+                    <select value={selectedLead?.contact_number ?? ""} onChange={(e) => selectLead(e.target.value)} className="input mt-1.5">
+                      <option value="" disabled>
+                        {matchingLeads.length ? "Select a company…" : "No companies for this agent"}
+                      </option>
+                      {industries.map((industry) => (
+                        <optgroup key={industry} label={industry}>
+                          {matchingLeads
+                            .filter((l) => l.industry === industry)
+                            .map((l) => (
+                              <option key={l.contact_number} value={l.contact_number}>
+                                {l.company_name}
+                              </option>
+                            ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </label>
+                  {selectedLead && (
+                    <p className="rounded-xl bg-white/[0.03] px-3 py-2 text-xs leading-relaxed text-muted ring-1 ring-white/10 sm:col-span-2">
+                      <span className="font-medium text-ink">{selectedLead.company_name}</span> · {selectedLead.industry}
+                      <br />
+                      {selectedLead.need_for_bot || selectedLead.company_description}
+                    </p>
+                  )}
+                </div>
+              )}
             </Card>
 
             {/* ---- call bar ---- */}
             <div className="glass sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-2xl p-3.5 shadow-2xl shadow-black/50">
               <div className="flex min-w-0 flex-1 items-center gap-3">
-                {selectedLead ? (
+                {selectedLead && contactName.trim() ? (
                   <>
-                    <Avatar name={selectedLead.contact_name} size={40} />
+                    <Avatar name={contactName.trim()} size={40} />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{selectedLead.contact_name}</p>
+                      <p className="truncate text-sm font-semibold">{contactName.trim()}</p>
                       <p className="truncate text-xs text-muted">{testStatus || selectedLead.company_name}</p>
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-muted">{testStatus || (selectedAgentId ? "Select a lead to continue." : "Select an agent, then a lead.")}</p>
+                  <p className="text-sm text-muted">
+                    {testStatus || (selectedAgentId ? "Enter a name and pick a company to continue." : "Select an agent first.")}
+                  </p>
                 )}
-              </div>
-              <div className="relative w-full sm:w-60">
-                <Icon name="mail" size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  type="email"
-                  value={confirmEmail}
-                  onChange={(e) => setConfirmEmail(e.target.value)}
-                  placeholder="Invite email (editable)"
-                  title="Auto-filled from the lead. Change it to your own address to receive the real calendar invite + reminder."
-                  className="input pl-9"
-                />
               </div>
               <button type="button" disabled={testDisabled} onClick={testSpeaker} className="btn-ghost">
                 <Icon name="speaker" size={16} /> Test speaker

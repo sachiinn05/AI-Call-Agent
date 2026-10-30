@@ -28,6 +28,9 @@ export const LeadSchema = z.object({
   // Where the calendar confirmation + reminder go. Optional: without it the
   // meeting is recorded but no real calendar event is created.
   email: z.string().optional(),
+  // True when the dashboard put a typed contact on a saved company: contact_number then
+  // belongs to the company template, so it must never be added to the do-not-call list.
+  custom_contact: z.boolean().optional(),
 });
 export type Lead = z.infer<typeof LeadSchema>;
 

@@ -42,7 +42,7 @@ async function confirmBooking(session: Session, result: CallResult) {
 /** Everything that happens once, when a call is over: score, honour opt-outs, book, follow up, save. */
 async function finalizeCall(session: Session): Promise<CallResult> {
   const result = await scoreCall(session);
-  if (result.compliance_flags.includes("do_not_call_requested")) {
+  if (result.compliance_flags.includes("do_not_call_requested") && !session.lead.custom_contact) {
     await addToDnc(session.lead.contact_number, "requested");
   }
   await confirmBooking(session, result);
