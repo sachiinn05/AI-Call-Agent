@@ -22,6 +22,12 @@ export const voice = {
   // dashboard raises it while the agent has asked an open question ("how do you handle…?"),
   // where "haan…" is usually the start of a sentence, not the answer.
   ackWaitMs: 450,
+  // Barge-in: while true, a caller talking over the agent cuts the agent off. Set per line by
+  // speak() (off for fillers and the closing line).
+  bargeIn: false,
+  // Bumped on every speak()/stopSpeaking() so a line that was cut off can tell it is stale.
+  speakId: 0,
+  cancelWait: null,
 };
 
 function normalizeWords(text) {
@@ -140,12 +146,15 @@ function waitForPlayer(player) {
     const done = () => {
       player.onended = null;
       player.onerror = null;
+      voice.cancelWait = null;
       resolve();
     };
+    voice.cancelWait = done;
     player.onended = done;
     player.onerror = () => {
       player.onended = null;
       player.onerror = null;
+      voice.cancelWait = null;
       reject(new Error("audio element failed"));
     };
   });
@@ -179,7 +188,9 @@ async function speakBrowser(text, language) {
   if (chosen) utter.voice = chosen;
   await new Promise((resolve, reject) => {
     utter.onend = resolve;
-    utter.onerror = () => reject(new Error("browser TTS failed"));
+    // cancel() (barge-in or hang-up) is not a failure, just the end of the line.
+    utter.onerror = (e) =>
+      e.error === "canceled" || e.error === "interrupted" ? resolve() : reject(new Error("browser TTS failed"));
     speechSynthesis.speak(utter);
   });
 }
@@ -191,6 +202,8 @@ const PREARM_MS = 800;
 
 export async function speak(text, language, opts = {}) {
   stopSpeaking();
+  const id = ++voice.speakId;
+  voice.bargeIn = Boolean(opts.bargeIn);
   voice.speaking = true;
   voice.ignoreUntil = Date.now() + 400;
   voice.currentText = text;
@@ -202,11 +215,13 @@ export async function speak(text, language, opts = {}) {
     });
     if (!res.ok) throw new Error("server TTS failed");
     const blob = await res.blob();
+    if (id !== voice.speakId) return; // the caller already talked over this line
     if (voice.objectUrl) URL.revokeObjectURL(voice.objectUrl);
     voice.objectUrl = URL.createObjectURL(blob);
     voice.player.src = voice.objectUrl;
     voice.player.volume = 1;
     await voice.player.play();
+    if (id !== voice.speakId) return;
     if (opts.onNearEnd) {
       let armed = false;
       const onTime = () => {
@@ -230,17 +245,25 @@ export async function speak(text, language, opts = {}) {
       await waitForPlayer(voice.player);
     }
   } catch {
+    if (id !== voice.speakId) return; // pause() on a cut-off line rejects play(): not a TTS failure
     await speakBrowser(text, language);
   } finally {
-    voice.speaking = false;
+    if (id === voice.speakId) {
+      voice.speaking = false;
+      voice.bargeIn = false;
+    }
   }
 }
 
+/** Cut the agent off now. Also settles the pending speak() so the call flow carries on. */
 export function stopSpeaking() {
+  voice.speakId += 1;
   voice.player.pause();
   voice.player.currentTime = 0;
   speechSynthesis.cancel();
   voice.speaking = false;
+  voice.bargeIn = false;
+  voice.cancelWait?.();
 }
 
 // A complete one-or-two-word acknowledgment. When the interim transcript is
@@ -273,8 +296,10 @@ const VAD_LOUD = 14;
 const VOICE_PRESENT = 6; // any speech-like energy on the mic at all
 const VAD_SILENCE_MS = 700;
 const VAD_POLL_MS = 100;
+// Words of non-echo speech needed to count as an interruption (one word is too often noise).
+const BARGE_IN_MIN_WORDS = 2;
 
-function createRecorderListener({ language, onPartial, onFinal, onIdle }) {
+function createRecorderListener({ language, onPartial, onFinal, onInterrupt, onIdle }) {
   const mimeType = pickRecorderMimeType();
   let pollHandle = 0;
   let silenceHandle = 0;
@@ -327,10 +352,11 @@ function createRecorderListener({ language, onPartial, onFinal, onIdle }) {
       if (voice.speaking) {
         // The agent is talking — only a sustained loud stretch counts as a
         // real interruption, not a click or a stray syllable.
-        loudStreak = loud ? loudStreak + 1 : 0;
+        loudStreak = loud && voice.bargeIn ? loudStreak + 1 : 0;
         if (loudStreak === 3) {
           stopSpeaking();
           beginRecording();
+          onInterrupt?.();
         }
       } else {
         loudStreak = 0;
@@ -365,13 +391,13 @@ function createRecorderListener({ language, onPartial, onFinal, onIdle }) {
   };
 }
 
-export function createListener({ language, onPartial, onFinal, onBargeIn, onIdle }) {
+export function createListener({ language, onPartial, onFinal, onInterrupt, onIdle }) {
   if (!SpeechRecognition) {
     // No live browser recognition (Safari, Firefox, mobile): fall back to
     // record-then-transcribe. Same start()/stop() shape as a real
     // SpeechRecognition instance, so startListening()/stopListening() below
     // and every caller need no changes at all.
-    const fallback = createRecorderListener({ language, onPartial, onFinal, onIdle });
+    const fallback = createRecorderListener({ language, onPartial, onFinal, onInterrupt, onIdle });
     voice.recognition = fallback;
     return fallback;
   }
@@ -466,12 +492,20 @@ export function createListener({ language, onPartial, onFinal, onBargeIn, onIdle
       }
     }
 
+    const words = text.split(/\s+/).length;
     latestText = text;
     latestLen = results.length;
+
+    // Barge-in: real words (the agent's echo was filtered out above) from a mic that is
+    // audibly loud mean the caller is talking over the agent. Stop the agent at once; what
+    // the caller says is committed by the normal pause timer below.
+    if (voice.speaking && voice.bargeIn && words >= BARGE_IN_MIN_WORDS && callerStillTalking()) {
+      stopSpeaking();
+      onInterrupt?.();
+    }
     onPartial?.(text);
 
     const last = results[results.length - 1];
-    const words = text.split(/\s+/).length;
     // A bare "haan" / "okay" is complete the moment we hear it. A one- or two-word
     // fragment ("demo kaun…") is usually the start of a sentence, so give it longer
     // before assuming the caller is done.

@@ -185,9 +185,16 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
           armSilenceNudge();
         },
         onFinal: (text: string) => void sendUtterance(text),
-        onBargeIn: (text: string) => void sendUtterance(text),
+        // The caller talked over the agent: the agent has already stopped, so show it is listening.
+        onInterrupt: () => {
+          setPhase("listening");
+          armSilenceNudge();
+        },
         onIdle: () => {
-          if (inCallRef.current && !busyRef.current && !voice.speaking) startListening();
+          // Chrome ends recognition sessions on its own; keep listening, including while a
+          // line the caller may interrupt is playing.
+          const canListen = voice.speaking ? voice.bargeIn : !busyRef.current;
+          if (inCallRef.current && canListen) startListening();
         },
       });
       listenerReadyRef.current = true;
@@ -238,8 +245,12 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
     setPhase("speaking");
     setVia({ via: viaKind, faqId });
     window.clearTimeout(silenceTimerRef.current);
-    // Arm the recognizer just before the line ends so the caller's first words aren't lost.
+    // Listen from the first word so the caller can interrupt (barge-in). The closing line
+    // (armMic false) is never interrupted. The near-end arming stays as a backup for when
+    // Chrome has closed the recognition session mid-line.
+    if (armMic && inCallRef.current && listenerReadyRef.current) startListening();
     await speak(text, languageRef.current, {
+      bargeIn: armMic,
       onNearEnd: armMic ? () => inCallRef.current && listenerReadyRef.current && startListening() : undefined,
     });
   }
