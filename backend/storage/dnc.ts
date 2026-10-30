@@ -2,6 +2,7 @@ import { createReadStream, existsSync } from "node:fs";
 import { appendFile, writeFile } from "node:fs/promises";
 import { parse } from "csv-parse";
 import { config } from "../config.js";
+import { db, dbEnabled } from "./db.js";
 
 function normalizeNumber(raw: string): string {
   const digits = raw.replace(/[^\d+]/g, "");
@@ -27,12 +28,22 @@ async function readNumbers(filePath: string): Promise<Set<string>> {
 }
 
 export async function isSuppressed(contactNumber: string): Promise<boolean> {
+  const number = normalizeNumber(contactNumber);
+  if (dbEnabled()) {
+    return (await (await db()).collection<{ _id: string }>("dnc").countDocuments({ _id: number })) > 0;
+  }
   const list = await readNumbers(config.dncPath);
-  return list.has(normalizeNumber(contactNumber));
+  return list.has(number);
 }
 
 export async function addToDnc(contactNumber: string, reason = "requested"): Promise<void> {
   const number = normalizeNumber(contactNumber);
+  if (dbEnabled()) {
+    await (await db())
+      .collection<{ _id: string }>("dnc")
+      .updateOne({ _id: number }, { $setOnInsert: { reason, added_at: new Date() } }, { upsert: true });
+    return;
+  }
   if (await isSuppressed(number)) return;
 
   if (!existsSync(config.dncPath)) {
