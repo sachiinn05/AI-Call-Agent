@@ -4,6 +4,8 @@ Outbound sales voice agent. It calls a lead, runs a scripted conversation, answe
 
 **Stack:** Node.js, TypeScript, Express 5 · React, Tailwind, Vite · Groq (intent) · Gemini embeddings (RAG) · Sarvam / Edge TTS · Cal.com · Gmail SMTP · Vitest
 
+**Live demo:** [https://arohi-ai-agent.onrender.com](https://arohi-ai-agent.onrender.com/) (free hosting, so the first load can take up to a minute)
+
 ## Screenshots
 
 **Choose an agent and a lead**
