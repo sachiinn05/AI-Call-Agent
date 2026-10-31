@@ -26,6 +26,7 @@ function getTransport(): Transporter {
 
 /** Send one plain email from the configured Gmail. Never throws — a mail failure must not lose the call record. */
 export async function sendMail(to: string, subject: string, text: string): Promise<MailOutcome> {
+  if (config.demoMode) return { sent: false, to, note: "Demo mode: no real email is sent" };
   if (!mailEnabled()) return { sent: false, to, note: "Gmail sending isn't set up (MAIL_USER / MAIL_APP_PASSWORD)" };
   if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return { sent: false, to, note: "No valid email address for this lead" };
   try {

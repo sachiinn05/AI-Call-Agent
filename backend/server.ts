@@ -6,6 +6,7 @@ import express from "express";
 import path from "node:path";
 import { config } from "./config.js";
 import { groqEnabled } from "./llm/groq.js";
+import { rateLimit } from "./rateLimit.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { healthRouter } from "./routes/health.js";
 import { phoneRouter } from "./routes/phone.js";
@@ -16,8 +17,22 @@ import { PreferredLanguageSchema } from "./types.js";
 import { prewarmSpeech } from "./voice/tts.js";
 
 const app = express();
+// Behind Render / a proxy the real visitor IP is in X-Forwarded-For; without this every
+// visitor would share one IP and one rate-limit bucket.
+app.set("trust proxy", 1);
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(config.root, "frontend", "dist")));
+
+// Limits protect the free API quotas (Groq, Gemini, Sarvam) from a single visitor.
+app.use("/api", rateLimit({ max: 240, windowMs: 60_000 }));
+app.use(
+  ["/api/tts", "/api/stt", "/api/simulate/reply", "/api/simulate/nudge"],
+  rateLimit({ max: 60, windowMs: 60_000, message: "You're going a bit fast. Wait a few seconds and try again." }),
+);
+app.use(
+  "/api/simulate/start",
+  rateLimit({ max: 8, windowMs: 60 * 60_000, message: "Demo limit reached: 8 calls per hour. Please try again later." }),
+);
 
 app.use(healthRouter);
 app.use(dashboardRouter);

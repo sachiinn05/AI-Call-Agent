@@ -1,5 +1,6 @@
 /** Real phone calls through Vapi: dial a lead, preview the dial plan, and receive Vapi's end-of-call webhook. */
 import { Router } from "express";
+import { config } from "../config.js";
 import { dialLead, honorDnc, planDials } from "../phone/dialer.js";
 import { LeadSchema } from "../types.js";
 import { routeVoice } from "../voice/routing.js";
@@ -7,6 +8,10 @@ import { routeVoice } from "../voice/routing.js";
 export const phoneRouter = Router();
 
 phoneRouter.post("/api/dial", async (req, res) => {
+  if (config.demoMode) {
+    res.status(403).json({ error: "Real phone calls are disabled in the public demo. Use the browser call." });
+    return;
+  }
   const parsed = LeadSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });

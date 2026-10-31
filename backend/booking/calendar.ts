@@ -25,6 +25,9 @@ export async function bookSlot(
   attendee: { name: string; email?: string; timeZone?: string },
 ): Promise<BookingOutcome> {
   const start = resolveSlotStart(slotLabel) ?? undefined;
+  if (config.demoMode) {
+    return { via: "logged", start, note: "Demo mode: the booking is recorded but no real calendar invite is created" };
+  }
   // The demo leads carry placeholder .example addresses that Cal.com rejects ("cannot
   // receive mail"). Say so plainly instead of spending an API call on a guaranteed failure.
   if (/\.example$/i.test(attendee.email ?? "")) {

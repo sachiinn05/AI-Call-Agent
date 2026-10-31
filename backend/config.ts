@@ -69,6 +69,8 @@ export const config = {
   ragIndexPath: path.resolve(root, env("RAG_INDEX_PATH", "data/rag-index.json")),
   ragChunkTokens: Number(env("RAG_CHUNK_TOKENS", "300")),
   ragChunkOverlap: Number(env("RAG_CHUNK_OVERLAP", "60")),
+  /** Public-demo switch: no real phone dials, no Cal.com bookings, no emails sent. */
+  demoMode: env("DEMO_MODE").toLowerCase() === "true",
   /** MongoDB connection string. Empty = keep leads, DNC and calls in local files. */
   mongoUri: env("MONGODB_URI"),
   leadsPath: path.resolve(root, env("LEADS_PATH", "data/leads.csv")),
