@@ -10,11 +10,8 @@ frontend/tsconfig.tsbuildinfo
 # runtime data — created on first run, never committed
 data/calls.json
 data/leads.csv
-# RAG vector index — regenerate with: npm run ingest
-data/rag-index.json
-
-# knowledge base source PDF is yours to bring (or build with: npm run kb:build)
-content/knowledge/*.pdf
+# RAG index and knowledge PDF are committed so the hosted site can answer PDF questions.
+# Regenerate the index with: npm run ingest
 content/knowledge/backup/
 content/knowledge/_kb.html
 

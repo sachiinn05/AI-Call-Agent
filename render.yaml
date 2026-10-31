@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: arohi-ai-agent
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run web:install && npm run web:build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DEMO_MODE
+        value: "true"
+      # Secrets: Render asks you to fill these in the dashboard (they are never stored in git).
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: COMPANY_NAME
+        sync: false
+      - key: FOUNDER_NAME
+        sync: false
+      - key: CAL_BOOKING_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: MONGODB_URI
+        sync: false
