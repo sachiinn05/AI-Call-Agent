@@ -1,6 +1,8 @@
 import { Component, useEffect, useState, type ReactNode } from "react";
 import LiveCall from "./components/LiveCall";
 import Overview from "./components/Overview";
+import Analytics from "./components/Analytics";
+import Feedback from "./components/Feedback";
 import Conversations from "./components/Conversations";
 import Leads from "./components/Leads";
 import Bookings from "./components/Bookings";
@@ -8,7 +10,7 @@ import Questions from "./components/Questions";
 import ScriptView from "./components/ScriptView";
 import { Icon, type IconName } from "./components/ui";
 
-type Tab = "live" | "overview" | "conversations" | "leads" | "bookings" | "questions" | "script";
+type Tab = "live" | "overview" | "analytics" | "feedback" | "conversations" | "leads" | "bookings" | "questions" | "script";
 
 const NAV: { group: string; items: { id: Tab; label: string; icon: IconName; title: string; subtitle: string }[] }[] = [
   {
@@ -16,6 +18,7 @@ const NAV: { group: string; items: { id: Tab; label: string; icon: IconName; tit
     items: [
       { id: "live", label: "Live call", icon: "phone", title: "Live call", subtitle: "Pick an agent and a lead, then talk to your AI sales rep." },
       { id: "overview", label: "Overview", icon: "chart", title: "Overview", subtitle: "How your voice agent is performing." },
+      { id: "analytics", label: "Analytics", icon: "chart", title: "Analytics", subtitle: "How far calls get, where callers stop, and what they object to — what to fix next." },
       { id: "conversations", label: "Conversations", icon: "chat", title: "Conversations", subtitle: "Every call, with the full transcript." },
     ],
   },
@@ -29,7 +32,10 @@ const NAV: { group: string; items: { id: Tab; label: string; icon: IconName; tit
   },
   {
     group: "Configure",
-    items: [{ id: "script", label: "Script", icon: "file", title: "Script & knowledge", subtitle: "Every line the agent can say." }],
+    items: [
+      { id: "script", label: "Script", icon: "file", title: "Script & knowledge", subtitle: "Every line the agent can say." },
+      { id: "feedback", label: "Feedback", icon: "flag", title: "Feedback", subtitle: "Replies you flagged as bad — turn them into tests and knowledge answers." },
+    ],
   },
 ];
 
@@ -176,11 +182,13 @@ export default function App() {
           </div>
           <PageBoundary key={`page-${tab}`}>
             {tab === "overview" && <Overview />}
+            {tab === "analytics" && <Analytics />}
             {tab === "conversations" && <Conversations />}
             {tab === "leads" && <Leads />}
             {tab === "bookings" && <Bookings />}
             {tab === "questions" && <Questions />}
             {tab === "script" && <ScriptView />}
+            {tab === "feedback" && <Feedback />}
           </PageBoundary>
         </main>
       </div>

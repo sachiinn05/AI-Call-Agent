@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { config } from "../config.js";
+import { computeAnalytics } from "../analytics/callStats.js";
 import { loadCalls } from "../storage/calls.js";
 import { loadLeads } from "../storage/leads.js";
 import { getScript } from "../script/scriptFile.js";
@@ -54,6 +55,11 @@ dashboardRouter.get("/api/script", async (_req, res) => {
     script: getScript(),
     rag: index ? { source: index.source, chunks: index.chunks.length, model: index.model, createdAt: index.createdAt } : null,
   });
+});
+
+/** Funnel, drop-off beats and top objections — what to fix in the script next. */
+dashboardRouter.get("/api/analytics", async (_req, res) => {
+  res.json(computeAnalytics(await loadCalls()));
 });
 
 dashboardRouter.get("/api/dashboard", async (_req, res) => {

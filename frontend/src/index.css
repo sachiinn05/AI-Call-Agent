@@ -17,6 +17,26 @@
   ::selection {
     background: rgba(139, 123, 255, 0.35);
   }
+  /* Native dropdown lists (Gender, Company) are drawn by the browser with its own background,
+     so the page's light text became white-on-white. Give the list items real dark colours. */
+  select {
+    color-scheme: dark;
+  }
+  select option,
+  select optgroup {
+    background-color: #12151f;
+    color: #eef0f7;
+  }
+  select option:disabled {
+    color: #8b91a8;
+  }
+  select optgroup {
+    color: #8b91a8;
+    font-weight: 600;
+  }
+  select option:checked {
+    background-color: #2a2f4a;
+  }
   /* quiet, thin scrollbars */
   * {
     scrollbar-width: thin;

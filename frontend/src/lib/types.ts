@@ -46,6 +46,8 @@ export type CallResult = {
   follow_up_email?: { sent: boolean; to: string; note?: string };
   lead?: { contact_name?: string; company_name?: string };
   timestamp?: string;
+  /** Every line with the beat it was said on (calls saved after analytics was added). */
+  turns?: { role: "agent" | "prospect"; text: string; state: string }[];
 };
 
 export type ReplyVia = "script" | "groq" | "steer" | "faq";
@@ -89,3 +91,38 @@ export type ScriptView = {
   script: Record<string, unknown>;
   rag: { source: string; chunks: number; model: string; createdAt: string } | null;
 };
+
+export type Analytics = {
+  totals: { calls: number; answered: number; reachedDemoAsk: number; booked: number; bookingRate: number; avgDurationSec: number };
+  funnel: { key: string; label: string; count: number }[];
+  dropOff: { stage: string; label: string; count: number }[];
+  objections: { id: string; count: number }[];
+  dispositions: { name: string; count: number }[];
+  callsWithoutStages: number;
+};
+
+export type FeedbackIssue = "wrong_answer" | "made_up" | "awkward" | "misheard" | "too_long" | "missing_answer" | "other";
+
+export type FeedbackItem = {
+  id: string;
+  call_id: string;
+  turn_index: number;
+  agent_text: string;
+  caller_text: string;
+  state: string;
+  issue: FeedbackIssue;
+  expected: string;
+  status: "new" | "resolved";
+  created_at: string;
+  contact_name: string;
+};
+
+export const FEEDBACK_ISSUES: { id: FeedbackIssue; label: string }[] = [
+  { id: "wrong_answer", label: "Wrong answer" },
+  { id: "made_up", label: "Made up a fact" },
+  { id: "awkward", label: "Awkward / unnatural" },
+  { id: "misheard", label: "Misheard the caller" },
+  { id: "too_long", label: "Too long" },
+  { id: "missing_answer", label: "Had no answer" },
+  { id: "other", label: "Other" },
+];

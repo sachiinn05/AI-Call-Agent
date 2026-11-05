@@ -13,6 +13,7 @@ import {
   voice,
 } from "../lib/voice.js";
 import type { Agent, CallResult, Lead, ReplyVia } from "../lib/types";
+import ReplyFlag, { type ReportProps } from "./ReplyFlag";
 import { Avatar, Badge, Card, DispositionBadge, EmptyState, Icon, ScoreMeter, SectionTitle, Skeleton, initials } from "./ui";
 
 type Phase = "idle" | "ringing" | "speaking" | "listening" | "ended";
@@ -783,7 +784,7 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
   );
 }
 
-export function TranscriptView({ result }: { result: CallResult | null }) {
+export function TranscriptView({ result, report }: { result: CallResult | null; report?: ReportProps }) {
   if (!result) {
     return (
       <EmptyState
@@ -793,10 +794,14 @@ export function TranscriptView({ result }: { result: CallResult | null }) {
       />
     );
   }
-  const lines = String(result.full_transcript || "")
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
+  // Saved turns when the call has them (same order the reports index into); else the transcript text.
+  const lines: { isAgent: boolean; text: string }[] = result.turns?.length
+    ? result.turns.map((t) => ({ isAgent: t.role === "agent", text: t.text }))
+    : String(result.full_transcript || "")
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .map((l) => ({ isAgent: /^agent:/i.test(l), text: l.replace(/^(agent|prospect):\s*/i, "") }));
   const when = [result.meeting_details?.date, result.meeting_details?.time].filter(Boolean);
   const meeting = when[0] === when[1] ? when[0] : when.join(" ");
   const booking = result.meeting_details?.booking;
@@ -844,11 +849,9 @@ export function TranscriptView({ result }: { result: CallResult | null }) {
       )}
       <div className="flex max-h-80 flex-col gap-2 overflow-y-auto pr-1">
         {lines.length === 0 && <p className="text-xs text-muted">No transcript saved for this call.</p>}
-        {lines.map((line, i) => {
-          const isAgent = /^agent:/i.test(line);
-          const text = line.replace(/^(agent|prospect):\s*/i, "");
+        {lines.map(({ isAgent, text }, i) => {
           return (
-            <div key={i} className={`flex ${isAgent ? "justify-start" : "justify-end"}`}>
+            <div key={i} className={`flex flex-col ${isAgent ? "items-start" : "items-end"}`}>
               <span
                 className={`max-w-[88%] rounded-2xl px-3 py-2 text-[13px] leading-relaxed ${
                   isAgent ? "rounded-bl-md bg-white/[0.06]" : "rounded-br-md bg-brand/20 ring-1 ring-brand/25"
@@ -856,6 +859,7 @@ export function TranscriptView({ result }: { result: CallResult | null }) {
               >
                 {text}
               </span>
+              {isAgent && report && <ReplyFlag index={i} report={report} />}
             </div>
           );
         })}

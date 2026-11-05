@@ -64,6 +64,15 @@ export const QuestionAskedSchema = z.object({
 });
 export type QuestionAsked = z.infer<typeof QuestionAskedSchema>;
 
+/** One line of a saved call, with the beat the call was on — what the analytics tab reads. */
+export const TurnRecordSchema = z.object({
+  role: z.enum(["agent", "prospect"]),
+  text: z.string(),
+  state: z.string(),
+  via: z.string().optional(),
+});
+export type TurnRecord = z.infer<typeof TurnRecordSchema>;
+
 /** Doc 9 output schema — identical shape to collections dispo, different vocabulary. */
 export const CallResultSchema = z.object({
   call_id: z.string(),
@@ -98,6 +107,8 @@ export const CallResultSchema = z.object({
   next_action: NextActionSchema,
   lead: LeadSchema.optional(),
   questions_asked: z.array(QuestionAskedSchema).optional(),
+  // Every line with the beat it was said on. Absent on calls saved before analytics existed.
+  turns: z.array(TurnRecordSchema).optional(),
   // Set when the call ended with an email to send (e.g. the caller asked for the calendar link).
   follow_up_email: z
     .object({ sent: z.boolean(), to: z.string(), note: z.string().optional() })
@@ -192,3 +203,25 @@ export type Session = {
 };
 
 export type ConversationRoute = "knowledge" | "booking" | "conversation";
+
+/** "This reply was bad" — a reviewer's note on one agent line of a saved call. */
+export const FEEDBACK_ISSUES = ["wrong_answer", "made_up", "awkward", "misheard", "too_long", "missing_answer", "other"] as const;
+export const FeedbackSchema = z.object({
+  id: z.string(),
+  call_id: z.string(),
+  /** Index into the call's turns / transcript lines. */
+  turn_index: z.number().int().nonnegative(),
+  /** The agent line that was flagged. */
+  agent_text: z.string().max(1000),
+  /** What the caller said just before it. */
+  caller_text: z.string().max(1000),
+  /** The beat the call was on when the flagged line was said. */
+  state: z.string().max(40),
+  issue: z.enum(FEEDBACK_ISSUES),
+  /** Optional: what the agent should have said. */
+  expected: z.string().max(1000).default(""),
+  status: z.enum(["new", "resolved"]).default("new"),
+  created_at: z.string(),
+  contact_name: z.string().max(100).default(""),
+});
+export type Feedback = z.infer<typeof FeedbackSchema>;

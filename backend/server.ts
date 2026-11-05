@@ -8,6 +8,7 @@ import { config } from "./config.js";
 import { groqEnabled } from "./llm/groq.js";
 import { rateLimit } from "./rateLimit.js";
 import { dashboardRouter } from "./routes/dashboard.js";
+import { feedbackRouter } from "./routes/feedback.js";
 import { healthRouter } from "./routes/health.js";
 import { phoneRouter } from "./routes/phone.js";
 import { simulateRouter } from "./routes/simulate.js";
@@ -34,8 +35,12 @@ app.use(
   rateLimit({ max: 8, windowMs: 60 * 60_000, message: "Demo limit reached: 8 calls per hour. Please try again later." }),
 );
 
+// Feedback is writable by anyone who can open the page: keep it slow enough not to be spammed.
+app.use("/api/feedback", rateLimit({ max: 30, windowMs: 60_000 }));
+
 app.use(healthRouter);
 app.use(dashboardRouter);
+app.use(feedbackRouter);
 app.use(voiceRouter);
 app.use(simulateRouter);
 app.use(phoneRouter);

@@ -3,7 +3,7 @@ import type { CallResult, Disposition, NextAction, Session } from "../types.js";
 import { CallResultSchema } from "../types.js";
 import { transcriptText } from "../conversation/stateMachine.js";
 
-function heuristicScore(session: Session): CallResult {
+export function heuristicScore(session: Session): CallResult {
   const flags = session.complianceFlags;
   const objections = session.objectionsRaised;
   const prospectTurns = session.turns.filter((t) => t.role === "prospect").length;
@@ -118,6 +118,7 @@ function heuristicScore(session: Session): CallResult {
     next_action,
     lead: session.lead,
     questions_asked: session.questionsAsked,
+    turns: session.turns.map(({ role, text, state, via }) => ({ role, text, state, via })),
   });
 }
 

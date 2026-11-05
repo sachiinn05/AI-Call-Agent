@@ -12,6 +12,7 @@
     "ingest": "tsx backend/cli.ts ingest",
     "import:local": "tsx scripts/import-local-data.ts",
     "kb:build": "tsx scripts/build-knowledge-pdf.ts",
+    "feedback:export": "tsx scripts/export-feedback.ts",
     "mail:test": "tsx scripts/mail-test.ts",
     "tunnel": "ngrok http 3001",
     "typecheck": "tsc --noEmit",

@@ -76,5 +76,6 @@ export const config = {
   leadsPath: path.resolve(root, env("LEADS_PATH", "data/leads.csv")),
   dncPath: path.resolve(root, env("DNC_PATH", "data/dnc.csv")),
   callsPath: path.resolve(root, env("CALLS_PATH", "data/calls.json")),
+  feedbackPath: path.resolve(root, env("FEEDBACK_PATH", "data/feedback.json")),
   companyId: env("COMPANY_ID", "main-company"),
 };

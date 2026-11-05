@@ -9,6 +9,7 @@ frontend/tsconfig.tsbuildinfo
 
 # runtime data — created on first run, never committed
 data/calls.json
+data/feedback.json
 data/leads.csv
 # RAG index and knowledge PDF are committed so the hosted site can answer PDF questions.
 # Regenerate the index with: npm run ingest
