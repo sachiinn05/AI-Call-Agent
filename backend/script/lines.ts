@@ -130,6 +130,11 @@ export function thinkingFillers(language: PreferredLanguage): string[] {
 }
 
 /** Outbound cold-open: say who's calling and why, then ask for a minute. Nothing else. */
+/** Step 1 of the opening: just confirm we have the right person, then wait. */
+export function greetingLine(lead: Lead, language: PreferredLanguage): string {
+  return say(getScript().flow.greeting, scriptLang(language), baseVars(lead, language));
+}
+
 export function openingLine(lead: Lead, language: PreferredLanguage): string {
   return say(getScript().flow.opening, scriptLang(language), baseVars(lead, language));
 }
@@ -244,6 +249,16 @@ export function noInfoPivotLine(lead: Lead, language: PreferredLanguage): string
 
 export function noInfoExitLine(lead: Lead, language: PreferredLanguage): string {
   return say(getScript().exits.no_info_exit, scriptLang(language), baseVars(lead, language));
+}
+
+/** The caller only said "Hello?" / couldn't hear: the opening again, short. */
+export function openingRepeatLine(lead: Lead, language: PreferredLanguage): string {
+  return say(getScript().steering.opening_repeat, scriptLang(language), baseVars(lead, language));
+}
+
+/** Someone other than the lead answered and the lead isn't available. */
+export function gatekeeperExitLine(lead: Lead, language: PreferredLanguage): string {
+  return say(getScript().exits.gatekeeper, scriptLang(language), baseVars(lead, language));
 }
 
 /** "Who is this?" at the start of the call. */

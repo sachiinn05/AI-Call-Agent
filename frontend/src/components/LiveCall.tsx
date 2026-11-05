@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   closeMic,
   createListener,
+  listenErrorMessage,
   drawWave,
   openMic,
   speak,
@@ -189,6 +190,11 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
           armSilenceNudge();
         },
         onFinal: (text: string) => void sendUtterance(text),
+        // Say WHY the agent can't hear (mic blocked, no mic, speech service unreachable).
+        onError: (code: string) => {
+          const message = listenErrorMessage(code);
+          if (message) setCaption(message);
+        },
         // The caller talked over the agent: the agent has already stopped, so show it is listening.
         onInterrupt: () => {
           setPhase("listening");
@@ -211,9 +217,11 @@ export default function LiveCall({ onInCallChange }: { onInCallChange: (v: boole
   async function ensureMic() {
     try {
       if (!voice.stream) await openMic();
+      voice.listenFatal = false;
       attachListener();
       return true;
     } catch {
+      setCaption(listenErrorMessage("not-allowed"));
       return false;
     }
   }

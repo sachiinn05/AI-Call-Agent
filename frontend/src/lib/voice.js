@@ -13,6 +13,9 @@ export const voice = {
   analyser: null,
   audioCtx: null,
   recognition: null,
+  // Set when the browser says listening can't work at all (mic blocked, no mic, service blocked).
+  // Stops the auto-restart loop, so a blocked mic is reported once instead of retried forever.
+  listenFatal: false,
   speaking: false,
   ignoreUntil: 0,
   player: new Audio(),
@@ -294,6 +297,7 @@ function micLevel(analyser) {
 // still needs to run.
 const VAD_LOUD = 14;
 const VOICE_PRESENT = 6; // any speech-like energy on the mic at all
+const FLOOR_MAX = 10; // the adaptive room-noise estimate never goes above this
 const VAD_SILENCE_MS = 700;
 const VAD_POLL_MS = 100;
 // Words of non-echo speech needed to count as an interruption (one word is too often noise).
@@ -391,7 +395,18 @@ function createRecorderListener({ language, onPartial, onFinal, onInterrupt, onI
   };
 }
 
-export function createListener({ language, onPartial, onFinal, onInterrupt, onIdle }) {
+// Chrome's SpeechRecognition error codes that no restart can fix.
+const FATAL_LISTEN_ERRORS = new Set(["not-allowed", "service-not-allowed", "audio-capture"]);
+
+export function listenErrorMessage(code) {
+  if (code === "not-allowed" || code === "service-not-allowed")
+    return "Microphone is blocked. Click the lock icon in the address bar, allow the microphone, then start the call again.";
+  if (code === "audio-capture") return "No microphone found. Plug one in or pick another input in your system sound settings.";
+  if (code === "network") return "Can't reach Chrome's speech service. Check your internet or VPN, or type your reply in the box.";
+  return "";
+}
+
+export function createListener({ language, onPartial, onFinal, onInterrupt, onIdle, onError }) {
   if (!SpeechRecognition) {
     // No live browser recognition (Safari, Firefox, mobile): fall back to
     // record-then-transcribe. Same start()/stop() shape as a real
@@ -424,14 +439,26 @@ export function createListener({ language, onPartial, onFinal, onInterrupt, onId
   let lastLoudAt = 0;
   let lastVoiceAt = 0;
   let sampler = 0;
+  const floors = [null, null]; // [quiet room, agent speaking]
   function startSampler() {
     if (sampler || !voice.analyser) return;
     sampler = window.setInterval(() => {
       if (!voice.analyser) return;
       const level = micLevel(voice.analyser);
       const now = Date.now();
-      if (level > VAD_LOUD) lastLoudAt = now;
-      if (level > VOICE_PRESENT) lastVoiceAt = now;
+      // Adaptive noise floor, one per situation: a quiet room, and the room while the agent's
+      // own voice is leaking from the speakers. Falls fast, rises slowly, so speech doesn't
+      // raise it but a noisy fan / TV / speaker echo does.
+      const k = voice.speaking ? 1 : 0;
+      // Never learn from speech itself (a caller who starts talking at once, or talks for a
+      // long time, must not become "the noise"), and cap the floor so a very loud room can't
+      // make real speech undetectable.
+      if (floors[k] === null) floors[k] = Math.min(level, FLOOR_MAX);
+      else if (level <= floors[k] * 1.8 + 5) floors[k] += (Math.min(level, FLOOR_MAX) - floors[k]) * (level < floors[k] ? 0.2 : 0.01);
+      const loudAt = Math.max(VAD_LOUD, floors[k] * 1.8 + 5);
+      const voiceAt = Math.max(VOICE_PRESENT, floors[k] * 1.4 + 3);
+      if (level > loudAt) lastLoudAt = now;
+      if (level > voiceAt) lastVoiceAt = now;
     }, 80);
   }
   function stopSampler() {
@@ -449,6 +476,16 @@ export function createListener({ language, onPartial, onFinal, onInterrupt, onId
     // A bare "haan"/"okay" with no sign of a voice on the mic is noise, not an answer.
     const bareAck = SHORT_ACK_RE.test(full.replace(/[.,!?]+$/, ""));
     if (bareAck && voice.analyser && sampler && Date.now() - lastVoiceAt > 2500) return;
+    // Ghost transcripts ("sar", "Achcha") come from room noise or the agent's own echo.
+    // Short fragments need clearly loud mic energy recently; any utterance needs some.
+    if (voice.analyser && sampler) {
+      const words = full.split(/\s+/).length;
+      const sinceLoud = Date.now() - lastLoudAt;
+      const sinceVoice = Date.now() - lastVoiceAt;
+      if (words <= 3 ? sinceLoud > 4000 : sinceVoice > 5000) return;
+    }
+    // Still the agent's own words coming back, even after it stopped talking.
+    if (voice.currentText && echoRatio(full, voice.currentText) >= 0.6) return;
     onFinal?.(full);
   }
 
@@ -471,6 +508,14 @@ export function createListener({ language, onPartial, onFinal, onInterrupt, onId
       commit();
     }, wait);
   }
+
+  recognition.onerror = (event) => {
+    const code = event?.error;
+    // no-speech / aborted are normal (silence, or we stopped it ourselves) — onend restarts it.
+    if (!code || code === "no-speech" || code === "aborted") return;
+    if (FATAL_LISTEN_ERRORS.has(code)) voice.listenFatal = true;
+    onError?.(code);
+  };
 
   recognition.onstart = () => startSampler();
 
@@ -537,6 +582,7 @@ export function createListener({ language, onPartial, onFinal, onInterrupt, onId
 }
 
 export function startListening() {
+  if (voice.listenFatal) return;
   try {
     voice.recognition?.start();
   } catch {

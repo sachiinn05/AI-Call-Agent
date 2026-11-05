@@ -113,7 +113,7 @@ const CONFUSED_RE = new RegExp(
 
 // "Who is this?" — only a short utterance counts, so "I want to know who Sachin is" is
 // left to the knowledge base instead of being answered as if it were about us.
-const IDENTITY_RE = /(kaun (hai|ho|bol|baat)|aap kaun|kaun bol rahe|who (is this|are you|is calling|am i speaking))/i;
+const IDENTITY_RE = /(kaun (hai|ho|bol|baat)|aap kaun|kaun bol rahe|who (is this|are you|is calling|am i speaking)|kya baat hai|kis (baare|bare) mein|kis liye|kya kaam hai|what is this (about|regarding)|what'?s this about)/i;
 
 // An exit with its own compliance wording wins over a tone cue.
 const OWNED_BY_OTHER_EXITS = new Set<Intent>(["dnc", "hostile", "no_time", "wrong_person", "call_later"]);

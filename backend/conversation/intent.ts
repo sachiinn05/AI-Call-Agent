@@ -12,9 +12,9 @@ const PATTERNS: Array<{ intent: Intent; re: RegExp }> = [
   { intent: "voicemail", re: /\b(voicemail|leave a message|after the (beep|tone))\b/i },
   {
     intent: "gatekeeper",
-    re: /\b(who is (this|calling)|not available|in a meeting|i('ll| will) take a message|assistant to)\b/i,
+    re: /\b(who is (this|calling)|not available|available nahi|out of office|in a meeting|meeting (mein|me) (hain|hai)|i('ll| will) take a message|message (de|chhod)|assistant to)\b/i,
   },
-  { intent: "wrong_person", re: /\b(wrong (number|person)|no one (by|named)|galat (number|aadmin))\b/i },
+  { intent: "wrong_person", re: /\b(wrong (number|person)|no one (by|named)|galat (number|aadmin|aadmi|insaan)|number galat|yahan koi .{0,25} nahi|not (him|her)|mera naam .{0,25} nahi)\b/i },
   { intent: "is_this_ai", re: /\b(are you (an? )?(ai|bot|robot)|is this (an? )?(ai|bot|recording)|kya (yeh )?ai)\b/i },
   { intent: "who_gave_number", re: /\b(who gave|where did you get|number kahan|kaise mila)\b/i },
   { intent: "already_use_competitor", re: /\b(already (have|use)|pehle se|we use (vapi|retell|bolna|exotel)|competitor)\b/i },
@@ -54,7 +54,7 @@ const PATTERNS: Array<{ intent: Intent; re: RegExp }> = [
   { intent: "give_availability", re: /\b(i('m| am) free|available|thursday|friday|wednesday)\b/i },
   {
     intent: "acknowledge",
-    re: /\b(okay|ok|haan|han|haanji|hmm|hum|ji|yes|yeah|yep|sure|alright|right|no problem|theek|achha|accha|bilkul|boliye|go on|go ahead|tell me|continue)\b/i,
+    re: /\b(okay|ok|haan|han|haanji|hmm|hum|ji|yes|yeah|yep|sure|alright|right|no problem|theek|achha|accha|bilkul|boliye|bolo|bataiye|batao|kahiye|speaking|go on|go ahead|go for it|shoot|tell me|continue)\b/i,
   },
   { intent: "interested", re: /\b(interested|sounds good|sounds interesting|let'?s do|karte hain|chalo|why not)\b/i },
 ];

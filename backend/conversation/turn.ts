@@ -9,6 +9,7 @@ import { isOffScript } from "./intent.js";
 import { faqNoMatchLine, offTopicLine } from "../script/lines.js";
 import {
   applyCallerSignal,
+  GREETING_ONLY_RE,
   backOnTrackTail,
   mentionsOfferedSlot,
   noInfoExit,
@@ -121,6 +122,11 @@ function bareNameQuestion(text: string): string | null {
   return null;
 }
 
+// Words that mean the caller is asking US something (about the product, price, who we are) rather
+// than answering our question about their business.
+const ADDRESSES_US_RE =
+  /\b(aap|aapka|aapki|aapke|aapko|aapse|your|you|yours|tum|tumhara|price|pricing|cost|kitna|kitne|kaun|kaise kaam|who|what is|how does|how much|does it|can it|can you|do you)\b/i;
+
 export async function handleTurn(session: Session, text: string): Promise<TurnResult> {
   if (!session.lastWasFaq) session.faqStreak = 0;
   session.lastWasFaq = false;
@@ -152,6 +158,16 @@ export async function handleTurn(session: Session, text: string): Promise<TurnRe
 
   let intent = await classifyIntent(session, text);
 
+  // We just asked about THEIR business ("what happens when calls come in and nobody's free?").
+  // A real sentence back that isn't aimed at us is the ANSWER: don't look it up in the product
+  // knowledge base (that produced confident nonsense) and don't ask the question again. Move on.
+  const answersDiscovery =
+    session.state === "CONTEXT_BRIDGE" &&
+    (intent === "unclear" || intent === "company_knowledge") &&
+    text.trim().split(/\s+/).length >= 4 &&
+    !ADDRESSES_US_RE.test(text);
+  if (answersDiscovery) intent = "acknowledge";
+
   // In CLOSE, naming one of the slots we just offered IS accepting it —
   // regardless of what label the LLM picked. Overrides give_availability /
   // acknowledge / unclear for "Wednesday", "11", "the second one", etc.
@@ -180,11 +196,12 @@ export async function handleTurn(session: Session, text: string): Promise<TurnRe
     !mentionsOfferedSlot(text, sessionSlots(session)) &&
     !BOOKING_ASK_RE.test(text);
   const nameQuestion = bareNameQuestion(text);
-  if (!session.ended && (wantsFaq(intent, text) || questionInClose || nameQuestion !== null)) {
+  if (!session.ended && !answersDiscovery && (wantsFaq(intent, text) || questionInClose || nameQuestion !== null)) {
     const match = await answerFromPdf(nameQuestion ?? text, session.lead, session.lead.preferred_language);
     if (match || intent === "company_knowledge") return speakAnswer(session, text, intent, match);
   } else if (
     !session.ended &&
+    !answersDiscovery &&
     session.state !== "CLOSE" &&
     (intent === "company_knowledge" || intent === "unclear") &&
     text.trim().split(" ").length >= 3
@@ -211,7 +228,8 @@ export async function handleTurn(session: Session, text: string): Promise<TurnRe
 
   const agent = replyTo(session, text, intent);
 
-  if (!session.ended && !session.didntCatch) {
+  // A bare "Hello?" gets the scripted opening again, word for word — no rephrasing.
+  if (!session.ended && !session.didntCatch && session.state !== "OPENING" && !GREETING_ONLY_RE.test(text.trim())) {
     // Caller went off-script (unclear / voicemail / gatekeeper): instead of
     // bluntly repeating the script question, let Groq craft one short
     // natural acknowledgment that still lands on the same question.

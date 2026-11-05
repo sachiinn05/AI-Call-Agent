@@ -366,6 +366,8 @@ export async function naturalizeReply(
           content: `${languageHint(session.lead.preferred_language)} Live outbound sales call. Rephrase the line below the way a real, warm salesperson would say it out loud, briefly reacting to what the caller just said.
 Rules:
 - Keep every fact, number, name, and time in the line exactly as given. Do not drop, add, or invent any.
+- Never add a promise, statistic, guarantee, feature, price, customer example or claim that is not in the line. Never say something is already set up or working at the caller's company.
+- The reaction to the caller is at most 3-4 words ("Right.", "Got it.") and never repeats or comments on facts the caller stated.
 - Keep the same question / call-to-action at the end.
 - 1-2 short spoken sentences. No lists, no markdown, no labels.
 - ${addressRule(session.lead)}
@@ -376,7 +378,7 @@ Output ONLY the rephrased spoken line.`,
           content: `Caller just said: "${userText}"\nLine to say: "${canned}"`,
         },
       ],
-      { maxTokens: 220, temperature: 0.5 },
+      { maxTokens: 220, temperature: 0.3 },
     );
     // Let the rephrase be as long as the scripted line (the pitch is three
     // sentences) — a hard 2-sentence cap was silently cutting off the

@@ -2,6 +2,7 @@ import { config } from "../config.js";
 import type { Lead } from "../types.js";
 import {
   closeLine,
+  greetingLine,
   contextBridge,
   defaultMeetingSlots,
   openingLine,
@@ -59,7 +60,8 @@ LEAD
 - need_for_bot: ${lead.need_for_bot || "not provided"}
 
 CALL FLOW — say these lines, in order, waiting after each
-1. OPENING: "${openingLine(lead, language)}"
+1. GREETING: "${greetingLine(lead, language)}" — then STOP and wait for their "hello" / "haan".
+   INTRO (after they answer): "${openingLine(lead, language)}" — then STOP and wait. Do not name the founder here.
 2. DISCOVERY: "${contextBridge(lead, language)}"
 3. PITCH (after whatever they say about their process): "${pitchLine(lead, language)}"
 4. CLOSE: "${closeLine(language, slots)}"

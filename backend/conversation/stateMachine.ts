@@ -20,6 +20,8 @@ import {
   dncLine,
   explainSimplyLine,
   fallbackLine,
+  gatekeeperExitLine,
+  greetingLine,
   holdOnScriptLine,
   hurryCloseLine,
   identityLine,
@@ -29,6 +31,7 @@ import {
   nudgeLine,
   offerSlotsLine,
   openingLine,
+  openingRepeatLine,
   pitchLine,
   silenceHangupLine,
   slotTakenLine,
@@ -40,6 +43,9 @@ import { intentToObjection, rebuttal } from "../script/objections.js";
 import type { CallerSignal } from "./signals.js";
 
 const MAX_OBJECTIONS = 3;
+
+// A bare greeting in answer to our opening: "Hello?", "Hi", "Namaste", "Hello hello", "Hello ji".
+export const GREETING_ONLY_RE = /^(hello+|hallo|helo|hi+|hey|namaste|namaskar|pranam)([\s,.!?]+(hello+|hi+|ji|sir|madam|ma'?am|namaste))*[\s,.!?]*$/i;
 
 function turn(session: Session, role: TranscriptTurn["role"], text: string): TranscriptTurn {
   const entry: TranscriptTurn = {
@@ -83,7 +89,8 @@ export function createSession(lead: Lead, callId = randomUUID()): Session {
 
 /** First spoken beat only. Wait for "okay" before continuing. */
 export function startCall(session: Session): string {
-  return speak(session, "OPENING", openingLine(session.lead, session.lead.preferred_language));
+  session.openingStage = "hello";
+  return speak(session, "OPENING", greetingLine(session.lead, session.lead.preferred_language));
 }
 
 /** The fixed times this call offers: the open ones picked at call start, else the generated defaults. */
@@ -357,6 +364,7 @@ export function applyCallerSignal(session: Session, prospectText: string, signal
     if (session.state !== "OPENING") return null;
     turn(session, "prospect", prospectText);
     session.silenceNudges = 0;
+    session.openingStage = "intro";
     return speak(session, "OPENING", identityLine(session.lead, lang));
   }
 
@@ -416,6 +424,40 @@ export function replyTo(session: Session, prospectText: string, intent?: Intent)
   // A one- or two-word scrap we can't read ("Mujhe", "Mande" — a bad mic read): asking the
   // caller to repeat is better than answering it, which used to repeat the whole close line.
   session.didntCatch = false;
+
+  // The very first reply is where real clients differ most from a developer testing it.
+  if (session.state === "OPENING") {
+    // Step 1 was only "Hello, is this {name}?". Whatever they answer with a plain hello / yes /
+    // "bolo" / a bare scrap, now introduce ourselves and ask for the minute. Anything that needs
+    // its own handling (wrong number, gatekeeper, a refusal, "who is this") falls through.
+    if (session.openingStage === "hello") {
+      const confirms =
+        GREETING_ONLY_RE.test(prospectText.trim()) ||
+        resolved === "acknowledge" ||
+        resolved === "interested" ||
+        resolved === "unclear";
+      // Anything else (a refusal, "who gave my number", a question) is answered by the normal
+      // flow below; either way the greeting step is over.
+      session.openingStage = "intro";
+      if (confirms) return speak(session, "OPENING", openingLine(session.lead, lang));
+    }
+    // They only said "Hello?" / "Hi" (or the line was bad): say the opening again, short.
+    // Twice is enough — a third bare hello means they can't hear us, so end politely.
+    if (GREETING_ONLY_RE.test(prospectText.trim())) {
+      const repeats = session.turns.filter((t) => t.role === "agent" && t.text === openingRepeatLine(session.lead, lang)).length;
+      if (repeats >= 2) {
+        session.complianceFlags.push("silence_hangup");
+        return endWith(session, "WRAP_UP", silenceHangupLine(lang));
+      }
+      return speak(session, "OPENING", openingRepeatLine(session.lead, lang));
+    }
+    // Someone else answered and the lead isn't there: never pitch the gatekeeper.
+    if (resolved === "gatekeeper") {
+      session.complianceFlags.push("gatekeeper_exit");
+      return endWith(session, "WRAP_UP", gatekeeperExitLine(session.lead, lang));
+    }
+  }
+
   if (
     (resolved === "unclear" || resolved === "company_knowledge") &&
     prospectText.trim().split(/\s+/).length <= 2 &&

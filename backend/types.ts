@@ -167,6 +167,8 @@ export type Session = {
   /** Caller asked for it short — skip the long build-up and don't pad replies. */
   hurry?: boolean;
   /** CLOSE: "asked" = we asked for THEIR time, "offered" = we offered fixed times, "confirm" = one time awaiting a yes. */
+  /** OPENING has two steps: confirm the person ("hello"), then introduce ourselves ("intro"). */
+  openingStage?: "hello" | "intro";
   closeStage?: "asked" | "offered" | "confirm";
   /** The single slot we're asking "shall I lock it?" about (closeStage "confirm"). */
   confirmSlot?: string;

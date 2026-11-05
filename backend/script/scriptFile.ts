@@ -24,6 +24,7 @@ export const ScriptSchema = z.object({
     message: 'topics must include a "general" fallback',
   }),
   flow: z.object({
+    greeting: Line,
     opening: Line,
     discovery: Line,
     discovery_question: Line,
@@ -53,9 +54,11 @@ export const ScriptSchema = z.object({
     no_info_exit: Line,
     calendar_link: Line,
     annoyed: Line,
+    gatekeeper: Line,
   }),
   steering: z.object({
     nudge: Line,
+    opening_repeat: Line,
     hold_on_script: Line,
     identity: Line,
     didnt_catch: Line,
